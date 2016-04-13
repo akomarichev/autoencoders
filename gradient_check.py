@@ -24,13 +24,13 @@ def compute_grad(J, theta, l_grad):
     dim2 = ((image_size - patch_size + 1) - patch_size + 1) * ((image_size - patch_size + 1) - patch_size + 1)
     # start = 2 ** 4 * 16 ** 2 + 4 ** 4 * 8 ** 2
     # start = 0
-    start = 4 ** 4 * 8 ** 2  # + 8 ** 4 * 4 ** 2
+    start = 4 ** 4 * 8 ** 2  + 8 ** 4 * 4 ** 2 + 32 ** 4 + 2 * 32 ** 2
     # start = 8 ** 4 * 4 ** 2
     # start = patch_size * patch_size  # + dim2 * small_patch ** 2
 
     # theta.shape[0]
     # for i in range(theta.shape[0]):
-    for i in range(start, start + 1001):
+    for i in range(start, start + 101):
         # for i in range(start, theta.shape[0]):
         theta_epsilon_plus = np.array(theta, dtype=np.float64)
         theta_epsilon_plus[i] = theta[i] + EPSILON
