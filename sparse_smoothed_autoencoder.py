@@ -13,7 +13,7 @@ import scipy.signal
 import cPickle
 import timeit
 
-N = 5
+N = 10000
 pool_size = 3
 epsiln = 3e-3
 image_size = 32
@@ -777,24 +777,27 @@ def get_representations_k_deep_sparse(theta, images, patch_size, image_size, N, 
 
     numberOfPatches_l1 = image_size // patch_size
     numberOfPatches_l2 = image_size // (2 * patch_size)
+    numberOfPatches_l3 = image_size // (4 * patch_size)
 
     W1 = theta[0:(patch_size ** 4) * (numberOfPatches_l1 ** 2)].reshape(patch_size ** 2, patch_size ** 2, numberOfPatches_l1 ** 2)
     W2 = theta[(patch_size ** 4) * (numberOfPatches_l1 ** 2):(patch_size ** 4) * (numberOfPatches_l1 ** 2) + ((2 * patch_size) ** 4) * (numberOfPatches_l2 ** 2)].reshape((2 * patch_size) ** 2, (2 * patch_size) ** 2, numberOfPatches_l2 ** 2)
 
     start = (patch_size ** 4) * (numberOfPatches_l1 ** 2) + ((2 * patch_size) ** 4) * (numberOfPatches_l2 ** 2)
-    end = (patch_size ** 4) * (numberOfPatches_l1 ** 2) + ((2 * patch_size) ** 4) * (numberOfPatches_l2 ** 2) + image_size ** 4
-    W3 = theta[start:end].reshape(image_size ** 2, image_size ** 2)
+    end = (patch_size ** 4) * (numberOfPatches_l1 ** 2) + ((2 * patch_size) ** 4) * (numberOfPatches_l2 ** 2) + ((4 * patch_size) ** 4) * (numberOfPatches_l3 ** 2)
 
-    B1 = theta[end:end + image_size ** 2].reshape(image_size, image_size)
-    B2 = theta[end + image_size ** 2:end + 2 * image_size ** 2].reshape(image_size, image_size)
-    B3 = theta[end + 2 * image_size ** 2:end + 3 * image_size ** 2].reshape(image_size, image_size)
+    W3 = theta[start:end].reshape((4 * patch_size) ** 2, (4 * patch_size) ** 2, numberOfPatches_l3 ** 2)
+    W4 = theta[end:].reshape(image_size ** 2, image_size ** 2)
+
+    # B1 = theta[end:end + image_size ** 2].reshape(image_size, image_size)
+    # B2 = theta[end + image_size ** 2:end + 2 * image_size ** 2].reshape(image_size, image_size)
+    # B3 = theta[end + 2 * image_size ** 2:end + 3 * image_size ** 2].reshape(image_size, image_size)
 
     # Feedforward
     # First hidden layer
 
     z2, z2_mask = calculate_k_sparsity_N(images, W1, numberOfPatches_l1, patch_size, image_size, K, N)
 
-    z2 += np.repeat(B1[:, :, np.newaxis], N, axis=2)
+    # z2 += np.repeat(B1[:, :, np.newaxis], N, axis=2)
 
     print "Representations hl1 (without mask): "
     for i in range(N):
@@ -816,7 +819,7 @@ def get_representations_k_deep_sparse(theta, images, patch_size, image_size, N, 
 
     z3, z3_mask = calculate_k_sparsity_N(z2, W2, numberOfPatches_l2, 2 * patch_size, image_size, 2 * K, N)
 
-    z3 += np.repeat(B2[:, :, np.newaxis], N, axis=2)
+    # z3 += np.repeat(B2[:, :, np.newaxis], N, axis=2)
 
     print "Representations hl2 (without mask): "
     for i in range(N):
@@ -832,17 +835,30 @@ def get_representations_k_deep_sparse(theta, images, patch_size, image_size, N, 
 
     show()
 
-    # print "Sparsity (second hidden layer): ", np.sum(z3_2D != 0)/N
+    # Third hidden layer
+    z4, z4_mask = calculate_k_sparsity_N(z3, W3, numberOfPatches_l3, 4 * patch_size, image_size, 4 * K, N)
 
-    z3 = z3.reshape(image_size ** 2, N)
-    z3_mask = z3_mask.reshape(image_size ** 2, N)
+    print "Representations hl3 (without mask): "
+    for i in range(N):
+        subplot(np.sqrt(N), np.sqrt(N), i + 1), imshow(z4[:, :, i], cmap=cm.gray)
+
+    show()
+
+    z4 *= z4_mask
+
+    print "Representations hl3 (with mask): "
+    for i in range(N):
+        subplot(np.sqrt(N), np.sqrt(N), i + 1), imshow(z4[:, :, i], cmap=cm.gray)
+
+    show()
+
+    z4 = z4.reshape(image_size ** 2, N)
+    z4_mask = z4_mask.reshape(image_size ** 2, N)
 
     # z4 = np.zeros((image_size ** 2, N))
-    z4 = W3.dot(z3)
+    z5 = W4.dot(z4)
 
-    h = z4.reshape(image_size, image_size, N)
-
-    h += np.repeat(B3[:, :, np.newaxis], N, axis=2)
+    h = z5.reshape(image_size, image_size, N)
 
     print "Original images: "
     for i in range(N):
@@ -880,6 +896,15 @@ def get_representations_k_deep_sparse(theta, images, patch_size, image_size, N, 
             k += 1
     show()
 
+    print "W3: "
+    k = 0
+    updated_patch_size = (4 * patch_size)
+    for i in range(numberOfPatches_l3 ** 2):
+        for j in range(updated_patch_size ** 2):
+            subplot(updated_patch_size * numberOfPatches_l3, updated_patch_size * numberOfPatches_l3, k + 1), imshow(W3[:, j, i].reshape(updated_patch_size, updated_patch_size), cmap=cm.gray)
+            k += 1
+    show()
+
     # print "W2 (inverse): "
     # k = 0
     # for i in range(numberOfPatches_l2 ** 2):
@@ -888,8 +913,8 @@ def get_representations_k_deep_sparse(theta, images, patch_size, image_size, N, 
     #         k += 1
     # show()
 
-    print "W3: "
-    subplot(1, 1, 1), title('W3'), imshow(W3[:, :], cmap=cm.gray)
+    print "W4: "
+    subplot(1, 1, 1), title('W4'), imshow(W4[:, :], cmap=cm.gray)
 
     show()
 
@@ -1288,20 +1313,21 @@ def run_sparse_autoencoder():
     theta = initialize_k_deep_sparse_autoencoder(patch_size, image_size)
 
     # print "Check gradients!"
-    lambda_ = 0.1
-    l_cost, l_grad = k_sparse_deep_autoencoder_cost_without_patches(theta, lambda_, images_all, patch_size, image_size, N, rho, beta, 2)
-    J = lambda x: k_sparse_deep_autoencoder_cost_without_patches(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 2)
-    gradient_check.compute_grad(J, theta, l_grad)
+    # lambda_ = 0.1
+    # l_cost, l_grad = k_sparse_deep_autoencoder_cost_without_patches(theta, lambda_, images_all, patch_size, image_size, N, rho, beta, 2)
+    # J = lambda x: k_sparse_deep_autoencoder_cost_without_patches(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 2)
+    # gradient_check.compute_grad(J, theta, l_grad)
 
     # print k_sparse_deep_autoencoder_cost(theta, lambda_, images_all, patch_size, image_size, N, rho, beta, patch_size)
 
     # J = lambda x: k_sparse_deep_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 1)
-    # J = lambda x: k_sparse_deep_autoencoder_cost_without_patches(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 2)
-    # # # # J = lambda x: k_sparse_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 200)
-    # # # # J = lambda x: sparse_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta)
-    # options_ = {'maxiter': 200, 'disp': True}
-    # result = scipy.optimize.minimize(J, theta, method='L-BFGS-B', jac=True, options=options_)
-    # theta = result.x
+    J = lambda x: k_sparse_deep_autoencoder_cost_without_patches(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 2)
+    # # # J = lambda x: k_sparse_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 200)
+    # # # J = lambda x: sparse_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta)
+    options_ = {'maxiter': 200, 'disp': True}
+    result = scipy.optimize.minimize(J, theta, method='L-BFGS-B', jac=True, options=options_)
+    print theta.shape
+    theta = result.x
 
     # a2_average = np.zeros((image_size, image_size))
 
@@ -1385,8 +1411,9 @@ def run_sparse_autoencoder():
     #     print "Cost: %s, iteration: %d", (l_cost, i)
     #     theta = theta - 0.1*l_grad
 
-    # np.save('weights.out', theta)
-    # theta = np.load('weights_learned/weights.out.npy')
+    np.save('weights_learned/weights.out', theta)
+
+    theta = np.load('weights_learned/weights.out.npy')
 
     # nOfPatches = image_size // patch_size
     # W1 = theta[0:(patch_size ** 4) * (nOfPatches ** 2)].reshape(patch_size ** 2, patch_size ** 2, nOfPatches ** 2)
@@ -1400,7 +1427,7 @@ def run_sparse_autoencoder():
 
     # get_representations_k_sparse(theta, images_repr, patch_size, image_size, images_repr.shape[2], 200)
     # get_representations(theta, images_repr, patch_size, image_size, images_repr.shape[2])
-    # get_representations_k_deep_sparse(theta, images_repr, patch_size, image_size, images_repr.shape[2], 2)
+    get_representations_k_deep_sparse(theta, images_repr, patch_size, image_size, images_repr.shape[2], 2)
 
 run_sparse_autoencoder()
 
