@@ -1060,17 +1060,20 @@ def get_represenations(theta, images, patch_size, image_size, N, K):
 
     numberOfPatches_l1 = image_size // patch_size
     numberOfPatches_l2 = image_size // (2 * patch_size)
+    numberOfPatches_l3 = image_size // (4 * patch_size)
 
     W1 = theta[0:(patch_size ** 4) * (numberOfPatches_l1 ** 2)].reshape(patch_size ** 2, patch_size ** 2, numberOfPatches_l1 ** 2)
     W2 = theta[(patch_size ** 4) * (numberOfPatches_l1 ** 2):(patch_size ** 4) * (numberOfPatches_l1 ** 2) + ((2 * patch_size) ** 4) * (numberOfPatches_l2 ** 2)].reshape((2 * patch_size) ** 2, (2 * patch_size) ** 2, numberOfPatches_l2 ** 2)
 
     start = (patch_size ** 4) * (numberOfPatches_l1 ** 2) + ((2 * patch_size) ** 4) * (numberOfPatches_l2 ** 2)
-    end = (patch_size ** 4) * (numberOfPatches_l1 ** 2) + ((2 * patch_size) ** 4) * (numberOfPatches_l2 ** 2) + image_size ** 4
-    W3 = theta[start:end].reshape(image_size ** 2, image_size ** 2)
+    end = (patch_size ** 4) * (numberOfPatches_l1 ** 2) + ((2 * patch_size) ** 4) * (numberOfPatches_l2 ** 2) + ((4 * patch_size) ** 4) * (numberOfPatches_l3 ** 2)
 
-    B1 = theta[end:end + image_size ** 2].reshape(image_size, image_size)
-    B2 = theta[end + image_size ** 2:end + 2 * image_size ** 2].reshape(image_size, image_size)
-    B3 = theta[end + 2 * image_size ** 2:end + 3 * image_size ** 2].reshape(image_size, image_size)
+    W3 = theta[start:end].reshape((4 * patch_size) ** 2, (4 * patch_size) ** 2, numberOfPatches_l3 ** 2)
+    W4 = theta[end:].reshape(image_size ** 2, image_size ** 2)
+
+    # B1 = theta[end:end + image_size ** 2].reshape(image_size, image_size)
+    # B2 = theta[end + image_size ** 2:end + 2 * image_size ** 2].reshape(image_size, image_size)
+    # B3 = theta[end + 2 * image_size ** 2:end + 3 * image_size ** 2].reshape(image_size, image_size)
 
     # Feedforward
     # First hidden layer
@@ -1082,7 +1085,7 @@ def get_represenations(theta, images, patch_size, image_size, N, K):
 
     z2, z2_mask = calculate_k_sparsity_N(images, W1, numberOfPatches_l1, patch_size, image_size, K, N)
 
-    z2 += np.repeat(B1[:, :, np.newaxis], N, axis=2)
+    # z2 += np.repeat(B1[:, :, np.newaxis], N, axis=2)
 
     z2 *= z2_mask
 
@@ -1099,13 +1102,22 @@ def get_represenations(theta, images, patch_size, image_size, N, K):
 
     z3, z3_mask = calculate_k_sparsity_N(z2, W2, numberOfPatches_l2, 2 * patch_size, image_size, 2 * K, N)
 
-    z3 += np.repeat(B2[:, :, np.newaxis], N, axis=2)
+    # z3 += np.repeat(B2[:, :, np.newaxis], N, axis=2)
 
     z3 *= z3_mask
 
     print "Done second hidden layer!"
 
-    return z3.reshape(image_size ** 2, N)
+    # print "Sparsity (second hidden layer): ", np.sum(z3_2D != 0)/N
+
+    # Third hidden layer
+    z4, z4_mask = calculate_k_sparsity_N(z3, W3, numberOfPatches_l3, 4 * patch_size, image_size, 4 * K, N)
+
+    z4 *= z4_mask
+
+    print "Done third hidden layer!"
+
+    return z4.reshape(image_size ** 2, N)
 
 
 def load_data_and_pickle(path, file_name_data, file_name_labels):
