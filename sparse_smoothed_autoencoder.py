@@ -1053,7 +1053,7 @@ def run_softmax():
 
     predictions = softmax_predict((opt_theta, image_size ** 2, num_labels), test_features)
     labels_test[labels_test == 10] = 0
-    print "Accuracy: {0:.2f}%".format(100 * np.sum(predictions == labels_test, dtype=np.float64) / labels_test.shape[0])
+    print "Accuracy: {:.2%}".format(np.sum(predictions == labels_test, dtype=np.float64) / labels_test.shape[0])
 
 
 def get_represenations(theta, images, patch_size, image_size, N, K):
