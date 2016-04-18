@@ -4,3 +4,5 @@
 *.dat
 *.npy
 data/
+images/
+weights_learned/

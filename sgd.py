@@ -33,58 +33,61 @@ def run_sparse_autoencoder(N, image_size, patch_size):
 
     # print "Check gradients!"
     # lambda_ = 0.1
-    # l_cost, l_grad = k_sparse_deep_autoencoder_cost_without_patches(theta, lambda_, images_all, patch_size, image_size, N, rho, beta, 2)
+    # l_cost, l_grad = model.k_sparse_deep_autoencoder_cost_without_patches(theta, lambda_, images_all, patch_size, image_size, N, 2)
     # J = lambda x: k_sparse_deep_autoencoder_cost_without_patches(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 2)
     # gradient_check.compute_grad(J, theta, l_grad)
 
     # print k_sparse_deep_autoencoder_cost(theta, lambda_, images_all, patch_size, image_size, N, rho, beta, patch_size)
 
     # J = lambda x: k_sparse_deep_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 1)
-    J = lambda x: model.k_sparse_deep_autoencoder_cost_without_patches(x, lambda_, images_all, patch_size, image_size, N, 2)
-    # # # J = lambda x: k_sparse_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 200)
-    # # # J = lambda x: sparse_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta)
-    options_ = {'maxiter': 2, 'disp': True}
-    result = scipy.optimize.minimize(J, theta, method='L-BFGS-B', jac=True, options=options_)
-    print theta.shape
-    theta = result.x
+    # J = lambda x: model.k_sparse_deep_autoencoder_cost_without_patches(x, lambda_, images_all, patch_size, image_size, N, 2)
+    # # # # J = lambda x: k_sparse_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta, 200)
+    # # # # J = lambda x: sparse_autoencoder_cost(x, lambda_, images_all, patch_size, image_size, N, rho, beta)
+    # options_ = {'maxiter': 2, 'disp': True}
+    # result = scipy.optimize.minimize(J, theta, method='L-BFGS-B', jac=True, options=options_)
+    # print theta.shape
+    # theta = result.x
 
     # a2_average = np.zeros((image_size, image_size))
 
-    # max_iter = 100
-    # batch_size = 1000
-    # n_batches = N // batch_size
-    # print "n_batches: ", n_batches
-    # learning_rate0 = 0.01
-    # learning_rate = learning_rate0
-    # iter = 0
-    # v = 0
-    # while iter < max_iter:
-    #     iter += 1
-    #     s = 0
-    #     # N_average = 0
-    #     # a2_average = get_average(theta, lambda_, images, patch_size, image_size, N, rho, beta)
-    #     # a2_average.fill(0)
-    #     for b in range(n_batches):
-    #         batch_begin = b * batch_size
-    #         N_average = (b + 1) * batch_size
-    #         batch_end = batch_begin + batch_size
-    #         X_batch = images_all[:, :, batch_begin:batch_end]
-    #         cost, grad = k_sparse_deep_autoencoder_cost(theta, lambda_, X_batch, patch_size, image_size, batch_size, rho, beta, patch_size)
-    #         # theta -= learning_rate * grad
+    max_iter = 2
+    batch_size = 10
+    n_batches = N // batch_size
+    print "n_batches: ", n_batches
+    learning_rate0 = 0.01
+    learning_rate = learning_rate0
+    iter = 0
+    v = {}
+    while iter < max_iter:
+        iter += 1
+        s = 0
+        # N_average = 0
+        # a2_average = get_average(theta, lambda_, images, patch_size, image_size, N, rho, beta)
+        # a2_average.fill(0)
+        for b in range(n_batches):
+            batch_begin = b * batch_size
+            N_average = (b + 1) * batch_size
+            batch_end = batch_begin + batch_size
+            X_batch = images_all[:, :, batch_begin:batch_end]
+            cost, grad = model.k_sparse_deep_autoencoder_cost_without_patches(theta, lambda_, X_batch, patch_size, image_size, batch_size, patch_size)
+            # theta -= learning_rate * grad
 
-    #         # momentum
-    #         v = mu * v - learning_rate * grad
-    #         theta += v
+            # momentum
+            for item in grad:
+                if item not in v:
+                    v[item] = np.zeros(grad[item].shape)
+                v[item] = mu * v[item] - learning_rate * grad[item]
+                theta[item] += v[item]
 
-    #         # J = lambda x: sparse_autoencoder_cost(x, lambda_, X_batch, patch_size, image_size, batch_size, rho, beta, a2_average)
-    #         # options_ = {'maxiter': 1, 'disp': True}
-    #         # result = scipy.optimize.minimize(J, theta, method='L-BFGS-B', jac=True, options=options_)
-    #         # theta = result.x
-    #         s += cost
-    #         print "Cost: %s, batch: %d", (cost, b)
-    #     print "Cost: %s, iter: %d", (s/n_batches, iter), "\n"
-    #     print "learning_rate: %d", (learning_rate), "\n"
-    #     # learning_rate = learning_rate0 / (1 + iter / float(batch_size))
+            # J = lambda x: sparse_autoencoder_cost(x, lambda_, X_batch, patch_size, image_size, batch_size, rho, beta, a2_average)
+            # options_ = {'maxiter': 1, 'disp': True}
+            # result = scipy.optimize.minimize(J, theta, method='L-BFGS-B', jac=True, options=options_)
+            # theta = result.x
+            s += cost
+            print "Cost: %s, batch: %d", (cost, b)
+        print "Cost: %s, iter: %d", (s/n_batches, iter), "\n"
+        print "learning_rate: %d", (learning_rate), "\n"
+        # learning_rate = learning_rate0 / (1 + iter / float(batch_size))
 
     # for i in range(10):
     #     # print y == (i + 1)
@@ -130,9 +133,9 @@ def run_sparse_autoencoder(N, image_size, patch_size):
     #     print "Cost: %s, iteration: %d", (l_cost, i)
     #     theta = theta - 0.1*l_grad
 
-    np.save('weights_learned/weights.out', theta)
+    helper.pickle_data('weights_learned/weights.out', theta)
 
-    theta = np.load('weights_learned/weights.out.npy')
+    theta = helper.unpickle_data('weights_learned/weights.out')
 
     # nOfPatches = image_size // patch_size
     # W1 = theta[0:(patch_size ** 4) * (nOfPatches ** 2)].reshape(patch_size ** 2, patch_size ** 2, nOfPatches ** 2)

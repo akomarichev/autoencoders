@@ -31,8 +31,6 @@ def initialize_k_deep_sparse_autoencoder(patch_size, image_size):
     # B2 = np.zeros((image_size, image_size))
     # B3 = np.zeros((image_size, image_size))
 
-    # theta = np.concatenate((W1.flatten(), W2.flatten(), W3.flatten(), B1.flatten(), B2.flatten(), B3.flatten()))
-
-    theta = np.concatenate((W1.flatten(), W2.flatten(), W3.flatten(), W4.flatten()))
+    theta = {'W1': W1, 'W2': W2, 'W3': W3, 'W4': W4}
 
     return theta
