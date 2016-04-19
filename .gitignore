@@ -3,6 +3,7 @@
 *.pyc
 *.dat
 *.npy
+test.py
 data/
 images/
 weights_learned/
