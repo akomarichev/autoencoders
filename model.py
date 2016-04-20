@@ -16,15 +16,15 @@ def k_sparse_deep_autoencoder_cost_without_patches(theta, lambda_, images, patch
 
     # Feedforward
     # First hidden layer
-    z2, z2_mask = helper.calculate_k_sparsity_N(images, W1, numberOfPatches_l1, patch_size, image_size, K, N)
+    z2, z2_mask = helper.calculate_k_sparsity_N(images, W1, numberOfPatches_l1, patch_size, image_size, 8, N)
     z2 *= z2_mask
 
     # Second hidden layer
-    z3, z3_mask = helper.calculate_k_sparsity_N(z2, W2, numberOfPatches_l2, 2 * patch_size, image_size, 2 * K, N)
+    z3, z3_mask = helper.calculate_k_sparsity_N(z2, W2, numberOfPatches_l2, 2 * patch_size, image_size, 32, N)
     z3 *= z3_mask
 
     # Third hidden layer
-    z4, z4_mask = helper.calculate_k_sparsity_N(z3, W3, numberOfPatches_l3, 4 * patch_size, image_size, 4 * K, N)
+    z4, z4_mask = helper.calculate_k_sparsity_N(z3, W3, numberOfPatches_l3, 4 * patch_size, image_size, 128, N)
     z4 *= z4_mask
 
     z4 = z4.reshape(image_size ** 2, N)
@@ -39,7 +39,6 @@ def k_sparse_deep_autoencoder_cost_without_patches(theta, lambda_, images, patch
     delta5 = -(images - h).reshape(image_size ** 2, N)
 
     delta4 = W4.T.dot(delta5)
-
     delta4 *= z4_mask
 
     W1_d = np.zeros(shape=(W1.shape))
@@ -98,19 +97,19 @@ def feed_forward(theta, images, patch_size, image_size, N, K):
 
     # Feedforward
     # First hidden layer
-    z2, z2_mask = helper.calculate_k_sparsity_N(images, W1, numberOfPatches_l1, patch_size, image_size, K, N)
+    z2, z2_mask = helper.calculate_k_sparsity_N(images, W1, numberOfPatches_l1, patch_size, image_size, 8, N)
 
     print "Done first hidden layer!"
 
     # print "Sparsity (first hidden layer): ", np.sum(z2_2D != 0)/N
 
     # Second hidden layer
-    z3, z3_mask = helper.calculate_k_sparsity_N(z2 * z2_mask, W2, numberOfPatches_l2, 2 * patch_size, image_size, 2 * K, N)
+    z3, z3_mask = helper.calculate_k_sparsity_N(z2 * z2_mask, W2, numberOfPatches_l2, 2 * patch_size, image_size, 32, N)
 
     print "Done second hidden layer!"
 
     # Third hidden layer
-    z4, z4_mask = helper.calculate_k_sparsity_N(z3 * z3_mask, W3, numberOfPatches_l3, 4 * patch_size, image_size, 4 * K, N)
+    z4, z4_mask = helper.calculate_k_sparsity_N(z3 * z3_mask, W3, numberOfPatches_l3, 4 * patch_size, image_size, 128, N)
 
     print "Done third hidden layer!"
 

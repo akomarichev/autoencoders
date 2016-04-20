@@ -1,4 +1,3 @@
-
 # ignore the following files and directories
 *.pyc
 *.dat
@@ -7,3 +6,4 @@ test.py
 data/
 images/
 weights_learned/
+loss_history/

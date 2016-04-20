@@ -63,7 +63,7 @@ def save_image_w(W, numberOfPatches, patch_size, name):
     for i in range(numberOfPatches ** 2):
         for j in range(patch_size ** 2):
             ax = fig.add_subplot(patch_size * numberOfPatches, patch_size * numberOfPatches, k + 1)
-            ax.imshow(W[j, :, i].reshape(patch_size, patch_size), cmap=cm.gray)
+            ax.imshow(W[:, j, i].reshape(patch_size, patch_size), cmap=cm.gray)
             plt.axis('off')
             k += 1
     fig.set_size_inches(25.6, 14.4)
@@ -83,3 +83,20 @@ def save_image_l(L, N, name):
     fig.set_size_inches(25.6, 14.4)
     path = "images/" + name + ".png"
     fig.savefig(path, bbox_inches='tight', dpi=200)
+
+
+def check_sparsity_of_gradients(grad, check_this):
+    for item in grad:
+        print "For ", item, " shape of gradients is: ", grad[item].shape
+        print "Number of elements > 0: ", np.sum(grad[item] != 0)
+        print "Number of elements equal to 0: ", np.sum(grad[item] == 0)
+        print "Number of elememts at all: ", np.prod(grad[item].shape)
+        print "Ratio: ", np.sum(grad[item] != 0)/(np.prod(grad[item].shape) + 0.0), '\n'
+        if item != 'W4' and item == check_this:
+            i, j, l = grad[item].shape
+            for k in range(l):
+                print "For patch ", k+1, ":"
+                print "Number of elements > 0: ", np.sum(grad[item][:, :, k] != 0)
+                print "Number of elements equal to 0: ", np.sum(grad[item][:, :, k] == 0)
+                print "Number of elements at all: ", np.prod(grad[item][:, :, k].shape)
+                print "Ratio: ", np.sum(grad[item][:, :, k] != 0)/(np.prod(grad[item][:, :, k].shape) + 0.0)

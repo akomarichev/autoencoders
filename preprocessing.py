@@ -1,4 +1,8 @@
 import numpy as np
+import scipy.io
+import os.path
+
+import helper
 
 
 def whitening(X):
@@ -47,7 +51,7 @@ def whitening(X):
     # print np.repeat(X_mean, X.shape[2]).shape
 
 
-def load_data_and_pickle(path, file_name_data, file_name_labels):
+def load_data(path):
     data = scipy.io.loadmat(path)
     X_original = data['X']
     y = data['y'].flatten()
@@ -61,7 +65,42 @@ def load_data_and_pickle(path, file_name_data, file_name_labels):
         gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
         X[index, :, :] = gray
 
-    X /= 255.0
-    X = whitening(X.T)
-    pickle_data(file_name_data, X)
-    pickle_data(file_name_labels, y)
+    return X, y
+
+
+def normalize_and_pickle(X, y, X_test, y_test):
+    file_train = "data/pickles/train.pickle"
+    file_train_labels = "data/pickles/labels_train.pickle"
+    file_val = "data/pickles/val.pickle"
+    file_val_labels = "data/pickles/labels_val.pickle"
+    file_test = "data/pickles/test.pickle"
+    file_test_labels = "data/pickles/labels_test.pickle"
+
+    X_train = X[:72000, :, :]
+    y_train = y[:72000]
+    X_val = X[72000:, :, :]
+    y_val = y[72000:]
+
+    # subtract training mean from validation and test set
+    mean = np.mean(X_train, axis=0)
+    X_train -= mean
+    X_val -= mean
+    X_test -= mean
+
+    X_train /= np.std(X_train, axis=0)
+    X_val /= np.std(X_val, axis=0)
+    X_test /= np.std(X_test, axis=0)
+
+    print "Max (X_train): ", np.amax(X_train)
+    print "Min (X_train): ", np.amin(X_train)
+    print "Max (X_test): ", np.amax(X_test)
+    print "Min (X_test): ", np.amin(X_test)
+    print "Max (X_val): ", np.amax(X_val)
+    print "Min (X_val): ", np.amin(X_val)
+
+    helper.pickle_data(file_train, X_train.T)
+    helper.pickle_data(file_val, X_val.T)
+    helper.pickle_data(file_test, X_test.T)
+    helper.pickle_data(file_train_labels, y_train)
+    helper.pickle_data(file_val_labels, y_val)
+    helper.pickle_data(file_test_labels, y_test)
