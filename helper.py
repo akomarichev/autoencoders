@@ -84,6 +84,26 @@ def save_image_l(L, N, name):
     path = "images/" + name + ".png"
     fig.savefig(path, bbox_inches='tight', dpi=200)
 
+def save_plot(loss_train, loss_val, loss_whole):
+    print "Saving plot both-loss."
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(range(1, len(loss_train)+1), loss_train, 'b-', label='loss_train')
+    ax.plot(range(1, len(loss_val)+1), loss_val, 'g-', label='loss_val')
+    ax.legend(shadow=True, fancybox=True)
+    plt.ylim([0, max(max(loss_train), max(loss_val)) + 50])
+    path = "plots/both_loss.png"
+    fig.savefig(path)
+
+    print "Saving plot whole loss."
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(range(1, len(loss_whole)+1), loss_whole, 'b-', label='whole_loss')
+    ax.legend(shadow=True, fancybox=True)
+    plt.ylim([0, max(loss_whole) + 50])
+    path = "plots/loss_whole.png"
+    fig.savefig(path)
+
 
 def check_sparsity_of_gradients(grad, check_this):
     for item in grad:

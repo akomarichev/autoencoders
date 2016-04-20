@@ -32,7 +32,7 @@ def run_sparse_autoencoder(N, image_size, patch_size, prepare_data=True):
 
     theta = init.initialize_k_deep_sparse_autoencoder(patch_size, image_size)
 
-    max_iter = 200
+    max_iter = 5
     batch_size = 1000
     n_batches = N // batch_size
     print "n_batches: ", n_batches
@@ -68,7 +68,7 @@ def run_sparse_autoencoder(N, image_size, patch_size, prepare_data=True):
         cost_train = model.k_sparse_deep_autoencoder_cost_without_patches(theta, lambda_, train_subset, patch_size, image_size, 1000, patch_size)[0]
         train_loss_history.append(cost_train)
         cost_val = model.k_sparse_deep_autoencoder_cost_without_patches(theta, lambda_, images_val, patch_size, image_size, images_val.shape[2], patch_size)[0]
-        train_loss_history.append(cost_val)
+        val_loss_history.append(cost_val)
         print "Cost_train: ", cost_train, ", cost_val: ", cost_val, ", epoch: ", iter, " learning_rate: %d", (learning_rate)
         learning_rate *= learning_rate_decay
 
@@ -78,6 +78,8 @@ def run_sparse_autoencoder(N, image_size, patch_size, prepare_data=True):
     # # helper.check_sparsity_of_gradients(l_grad, 'W3')
     # J = lambda x: model.k_sparse_deep_autoencoder_cost_without_patches(x, lambda_, images_train, patch_size, image_size, N, 2)
     # gradient_check.compute_grad(J, theta, l_grad)
+
+    helper.save_plot(train_loss_history, val_loss_history, whole_loss_history)
 
     helper.pickle_data('weights_learned/weights.out', theta)
     helper.pickle_data('loss_history/whole_loss_history.data', whole_loss_history)

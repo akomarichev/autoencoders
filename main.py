@@ -5,7 +5,7 @@ import timeit
 
 # constants
 
-N = 72000
+N = 2000
 image_size = 32
 patch_size = 4
 

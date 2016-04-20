@@ -7,3 +7,4 @@ data/
 images/
 weights_learned/
 loss_history/
+plots/
