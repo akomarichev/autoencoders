@@ -1,6 +1,16 @@
 import numpy as np
 
 
+def init_original_model(image_size):
+    l_size = image_size ** 2
+    
+    r = np.sqrt(6) / np.sqrt(l_size + l_size + 1)
+    W1 = np.random.random((l_size, l_size)) * 2 * r - r
+    W2 = np.random.random((l_size, l_size)) * 2 * r - r
+
+    return {'W1': W1, 'W2': W2}
+
+
 def initialize_k_deep_sparse_autoencoder(patch_size, image_size):
     numberOfPatches_l1 = image_size // patch_size
     numberOfPatches_l2 = image_size // (2 * patch_size)

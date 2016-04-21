@@ -120,3 +120,30 @@ def check_sparsity_of_gradients(grad, check_this):
                 print "Number of elements equal to 0: ", np.sum(grad[item][:, :, k] == 0)
                 print "Number of elements at all: ", np.prod(grad[item][:, :, k].shape)
                 print "Ratio: ", np.sum(grad[item][:, :, k] != 0)/(np.prod(grad[item][:, :, k].shape) + 0.0)
+        if item == 'W1':
+            r, c = grad[item].shape
+            np.set_printoptions(threshold=1024)
+            # print 'W1', np.sum(grad[item], axis=1)
+            W1 = np.sum(grad[item], axis=1)
+            # for k in range(r):
+            #     print "For patch ", k+1, ":"
+            #     print "Number of elements > 0: ", np.sum(grad[item][k, :] != 0)
+            #     print "Number of elements equal to 0: ", np.sum(grad[item][k, :] == 0)
+            #     print "Number of elements at all: ", np.prod(grad[item][k, :].shape)
+            #     print "Ratio: ", np.sum(grad[item][k, :] != 0)/(np.prod(grad[item][k, :].shape) + 0.0)
+        if item == 'W2':
+            r, c = grad[item].shape
+            np.set_printoptions(threshold=1024)
+            # print 'W2', np.sum(grad[item], axis=0)
+            W2 = np.sum(grad[item], axis=0)
+            # for k in range(c):
+            #     print "For patch ", k+1, ":"
+            #     print "Number of elements > 0: ", np.sum(grad[item][:, k] != 0)
+            #     print "Number of elements equal to 0: ", np.sum(grad[item][:, k] == 0)
+            #     print "Number of elements at all: ", np.prod(grad[item][:, k].shape)
+            #     print "Ratio: ", np.sum(grad[item][:, k] != 0)/(np.prod(grad[item][:, k].shape) + 0.0)
+
+    mask_W1 = (W1 != 0)
+    mask_W2 = (W2 != 0)
+    print np.sum(mask_W1 == True)
+    print np.sum(mask_W2 == True)
